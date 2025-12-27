@@ -1,10 +1,38 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.tsx";
+import "./App.css";
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+
+import {
+  Route,
+  RouterProvider,
+  createBrowserRouter,
+  createRoutesFromElements,
+} from "react-router-dom";
+import Dashboard from "./pages/dashboard/Dashboard.tsx";
+import Join from "./pages/join/Join.tsx";
+import Lobby from "./pages/lobby/Lobby.tsx";
+import Meeting from "./pages/meeting/Meeting.js";
+import { MeetingProvider } from "./hooks/context/MeetingContext.tsx";
+
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route path="/" element={<App/>}>
+      <Route path="" element={<Dashboard/>}></Route>
+      <Route path="/join" element={<Join/>}></Route>
+      <Route path="/lobby" element={<Lobby/>}></Route>
+      <Route path="/meeting" element={<Meeting/>}></Route>
+    </Route>
+  )
+);
+
+ReactDOM.createRoot(
+  document.getElementById("root")!
+).render(
+  <React.StrictMode>
+    <MeetingProvider>
+      <RouterProvider router={router} />
+    </MeetingProvider>
+  </React.StrictMode>
+);
