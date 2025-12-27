@@ -2,8 +2,6 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import "./App.css";
-
-
 import {
   Route,
   RouterProvider,
@@ -15,24 +13,25 @@ import Join from "./pages/join/Join.tsx";
 import Lobby from "./pages/lobby/Lobby.tsx";
 import Meeting from "./pages/meeting/Meeting.js";
 import { MeetingProvider } from "./hooks/context/MeetingContext.tsx";
+import { AuthProvider } from "./hooks/context/AuthContext.tsx";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route path="/" element={<App/>}>
-      <Route path="" element={<Dashboard/>}></Route>
-      <Route path="/join" element={<Join/>}></Route>
-      <Route path="/lobby" element={<Lobby/>}></Route>
-      <Route path="/meeting" element={<Meeting/>}></Route>
+    <Route path="/" element={<App />}>
+      <Route path="" element={<Dashboard />}></Route>
+      <Route path="/join" element={<Join />}></Route>
+      <Route path="/lobby" element={<Lobby />}></Route>
+      <Route path="/meeting" element={<Meeting />}></Route>
     </Route>
   )
 );
 
-ReactDOM.createRoot(
-  document.getElementById("root")!
-).render(
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <MeetingProvider>
-      <RouterProvider router={router} />
-    </MeetingProvider>
+    <AuthProvider>
+      <MeetingProvider>
+        <RouterProvider router={router} />
+      </MeetingProvider>
+    </AuthProvider>
   </React.StrictMode>
 );
