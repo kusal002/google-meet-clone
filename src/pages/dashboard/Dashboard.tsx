@@ -4,6 +4,7 @@ import JoinMeetingDialog from "../../components/JoinMeetingDialog";
 import { AuthContext } from "../../hooks/context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "../../hooks/firebase/Firebase";
+import { MeetingContext } from "../../hooks/context/MeetingContext";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -11,6 +12,13 @@ const Dashboard = () => {
 
   const authContext = useContext(AuthContext);
   if (!authContext) return null;
+
+  const meetingContext = useContext(MeetingContext);
+  if (!meetingContext) return null;
+
+  const { createMeeting } = meetingContext;
+
+  // console.log("meeting id", createMeeting());
 
   const { user } = authContext;
 
@@ -94,7 +102,10 @@ const Dashboard = () => {
               </p>
 
               <div
-                onClick={() => navigate("/lobby")}
+                onClick={() => {
+                  const meetingId = createMeeting();
+                  navigate(`/lobby/:${meetingId}`);
+                }}
                 className="mt-6 inline-block cursor-pointer rounded-lg bg-purple-600 px-4 py-2 text-white transition group-hover:bg-purple-700"
               >
                 Create now

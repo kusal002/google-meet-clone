@@ -11,8 +11,13 @@ export type Participant = {
 interface MeetingContextType {
   stream: MediaStream | null;
   setStream: React.Dispatch<React.SetStateAction<MediaStream | null>>;
-    participants: Participant[];
+
+  participants: Participant[];
   setParticipants: React.Dispatch<React.SetStateAction<Participant[]>>;
+
+  meetingId: string | null;
+  createMeeting: () => string;
+  joinMeeting: (id: string) => void;
 }
 
 export const MeetingContext = createContext<MeetingContextType | null>(null);
@@ -21,30 +26,18 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [meetingId, setMeetingId] = useState<string | null>(null);
 
-  const [participants, setParticipants] = useState<Participant[]>([
-    {
-      id: "1",
-      name: "Kusal (You)",
-      isMuted: false,
-      isCameraOn: true,
-      isLocal: true,
-    },
-    {
-      id: "2",
-      name: "Alex",
-      isMuted: true,
-      isCameraOn: false,
-      isLocal: false,
-    },
-    {
-      id: "3",
-      name: "Riya",
-      isMuted: false,
-      isCameraOn: true,
-      isLocal: false,
-    },
-  ]);
+  const createMeeting = () => {
+    const id = crypto.randomUUID();
+    setMeetingId(id);
+    return id;
+  };
+
+  const joinMeeting = (id: string) => {
+    setMeetingId(id);
+  };
 
   return (
     <MeetingContext.Provider
@@ -53,10 +46,12 @@ export const MeetingProvider: React.FC<{ children: React.ReactNode }> = ({
         setStream,
         participants,
         setParticipants,
+        meetingId,
+        createMeeting,
+        joinMeeting,
       }}
     >
       {children}
     </MeetingContext.Provider>
   );
 };
-

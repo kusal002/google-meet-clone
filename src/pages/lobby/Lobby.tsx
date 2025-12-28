@@ -17,29 +17,42 @@ const Lobby = () => {
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  const stopMedia = () => {
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      setStream(null);
+    }
+  };
+
   // Request camera + mic permissions on mount
   useEffect(() => {
+    let activeStream: MediaStream;
+
     async function getMedia() {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
+        activeStream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: true,
         });
-        setStream(mediaStream);
+
+        setStream(activeStream);
+
         if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
+          videoRef.current.srcObject = activeStream;
           videoRef.current.play();
         }
-      } catch (err) {
+      } catch {
         setError("Camera or microphone permission denied.");
       }
     }
 
     getMedia();
 
-    // Cleanup on unmount
     return () => {
-      stream?.getTracks().forEach((track) => track.stop());
+      if (activeStream) {
+        activeStream.getTracks().forEach((track) => track.stop());
+      }
+      setStream(null);
     };
   }, []);
 
@@ -67,12 +80,14 @@ const Lobby = () => {
 
   return (
     <div className="min-h-screen from-indigo-50 via-white to-purple-50 flex flex-col items-center justify-center p-6">
-      
       {/* Header */}
       <header className="w-full max-w-5xl flex justify-between items-center mb-6">
         <h1 className="text-xl font-semibold">Meeting Lobby</h1>
         <button
-          onClick={() => navigate("/")}
+          onClick={() => {
+            stopMedia();
+            navigate("/");
+          }}
           className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100"
         >
           Back
@@ -81,7 +96,8 @@ const Lobby = () => {
 
       {/* Meeting Info */}
       <p className="text-gray-600 mb-6">
-        Meeting Code: <span className="font-mono text-indigo-600">{meetingId}</span>
+        Meeting Code:{" "}
+        <span className="font-mono text-indigo-600">{meetingId}</span>
       </p>
 
       {/* Video Preview */}
@@ -93,7 +109,9 @@ const Lobby = () => {
         ) : (
           <video
             ref={videoRef}
-            className={`w-full h-full object-cover ${!cameraOn ? "opacity-40" : ""}`}
+            className={`w-full h-full object-cover ${
+              !cameraOn ? "opacity-40" : ""
+            }`}
             autoPlay
             muted
           />
@@ -112,7 +130,9 @@ const Lobby = () => {
         <button
           onClick={toggleMic}
           className={`p-3 rounded-full border ${
-            micOn ? "bg-green-500 border-green-600 text-white" : "bg-red-500 border-red-600 text-white"
+            micOn
+              ? "bg-green-500 border-green-600 text-white"
+              : "bg-red-500 border-red-600 text-white"
           }`}
         >
           {micOn ? <FiMic size={20} /> : <FiMicOff size={20} />}
@@ -121,14 +141,18 @@ const Lobby = () => {
         <button
           onClick={toggleCamera}
           className={`p-3 rounded-full border ${
-            cameraOn ? "bg-green-500 border-green-600 text-white" : "bg-red-500 border-red-600 text-white"
+            cameraOn
+              ? "bg-green-500 border-green-600 text-white"
+              : "bg-red-500 border-red-600 text-white"
           }`}
         >
           {cameraOn ? <FiVideo size={20} /> : <FiVideoOff size={20} />}
         </button>
 
         <button
-          onClick={() => navigate(`/meeting`)}
+          onClick={() => {
+            navigate(`/meeting/:${meetingId}`);
+          }}
           className="ml-4 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
         >
           Join Meeting
@@ -136,7 +160,11 @@ const Lobby = () => {
       </div>
 
       {/* Optional: instructions */}
-      {error && <p className="text-red-500 text-sm">Enable camera/mic to join the meeting</p>}
+      {error && (
+        <p className="text-red-500 text-sm">
+          Enable camera/mic to join the meeting
+        </p>
+      )}
     </div>
   );
 };

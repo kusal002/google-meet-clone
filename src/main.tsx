@@ -18,10 +18,10 @@ import { AuthProvider } from "./hooks/context/AuthContext.tsx";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
-      <Route path="" element={<Dashboard />}></Route>
-      <Route path="/join" element={<Join />}></Route>
-      <Route path="/lobby" element={<Lobby />}></Route>
-      <Route path="/meeting" element={<Meeting />}></Route>
+      <Route path="" element={<Dashboard />}/>
+      <Route path="/join" element={<Join />}/>
+      <Route path="lobby/:meetingId" element={<Lobby />} />
+      <Route path="meeting/:meetingId" element={<Meeting />} />
     </Route>
   )
 );
