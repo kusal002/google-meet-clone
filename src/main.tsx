@@ -27,11 +27,9 @@ const router = createBrowserRouter(
 );
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
     <AuthProvider>
       <MeetingProvider>
         <RouterProvider router={router} />
       </MeetingProvider>
     </AuthProvider>
-  </React.StrictMode>
 );

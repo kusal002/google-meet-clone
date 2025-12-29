@@ -151,7 +151,7 @@ const Lobby = () => {
 
         <button
           onClick={() => {
-            navigate(`/meeting/:${meetingId}`);
+            navigate(`/meeting/${meetingId}`);
           }}
           className="ml-4 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
         >
