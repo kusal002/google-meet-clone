@@ -1,68 +1,74 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiLogOut } from "react-icons/fi";
-import { MeetingContext } from "../../hooks/context/MeetingContext";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import ParticipantTile from "../../components/ParticipantTile";
+import { useWebRTC } from "../../hooks/webrtc/useWebRTC";
 
 const Meeting = () => {
   const navigate = useNavigate();
   const { meetingId } = useParams<{ meetingId: string }>();
 
-  const meetingContext = useContext(MeetingContext);
-  if (!meetingContext) return null;
+  if (!meetingId) return null;
 
-  const { stream, setStream } = meetingContext;
+  // ✅ Determine if host based on hash
+  const isHost = !window.location.hash.includes("join");
+
+  const { localStream, remoteStream, createOffer, joinMeeting, leaveMeeting } =
+    useWebRTC({ meetingId, isHost });
 
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(true);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const didLeaveManually = useRef(false);
 
   /* ----------------------------------------------------
-     Ensure we ALWAYS have a live media stream
+     HOST vs JOINER
   ---------------------------------------------------- */
   useEffect(() => {
-    const ensureStream = async () => {
-      if (
-        !stream ||
-        !stream.active ||
-        stream.getVideoTracks().length === 0
-      ) {
-        console.log("🎥 Acquiring fresh media stream...");
+    if (isHost) {
+      createOffer();
+    } else {
+      joinMeeting();
+    }
 
-        const newStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
-
-        setStream(newStream);
+    return () => {
+      // cleanup ONLY if user didn't click Leave
+      if (!didLeaveManually.current) {
+        leaveMeeting();
       }
     };
-
-    ensureStream().catch(console.error);
-  }, []);
+  }, [meetingId]);
 
   /* ----------------------------------------------------
-     Attach stream to video element
+     Participants (LOCAL + REMOTE)
   ---------------------------------------------------- */
-  useEffect(() => {
-    if (!videoRef.current || !stream) return;
-
-    videoRef.current.srcObject = stream;
-    videoRef.current.muted = true;
-
-    videoRef.current
-      .play()
-      .catch((err) => console.warn("Autoplay blocked:", err));
-  }, [stream]);
+  const participants = [
+    {
+      id: "local",
+      name: "You",
+      isMuted: micOn,
+      isCameraOn: cameraOn,
+      isLocal: true,
+      stream: localStream,
+    },
+    {
+      id: "remote",
+      name: "Guest",
+      isMuted: false,
+      isCameraOn:
+        remoteStream?.getVideoTracks().some((track) => track.enabled) ?? false,
+      isLocal: false,
+      stream: remoteStream,
+    },
+  ];
 
   /* ----------------------------------------------------
      Controls
   ---------------------------------------------------- */
   const toggleMic = () => {
-    if (!stream) return;
-    const track = stream.getAudioTracks()[0];
+    if (!localStream) return;
+    const track = localStream.getAudioTracks()[0];
     if (!track) return;
 
     track.enabled = !track.enabled;
@@ -70,55 +76,29 @@ const Meeting = () => {
   };
 
   const toggleCamera = () => {
-    if (!stream) return;
-    const track = stream.getVideoTracks()[0];
+    if (!localStream) return;
+    const track = localStream.getVideoTracks()[0];
     if (!track) return;
 
     track.enabled = !track.enabled;
     setCameraOn(track.enabled);
   };
 
-  const leaveMeeting = () => {
-    stream?.getTracks().forEach((t) => t.stop());
-    setStream(null);
-    navigate("/");
-  };
+ const handleLeave = () => {
+  didLeaveManually.current = true;
+  navigate("/");
+  leaveMeeting(); // fire-and-forget
+};
 
-  /* ----------------------------------------------------
-     Debug (optional – safe to remove later)
-  ---------------------------------------------------- */
-  useEffect(() => {
-    if (!stream) return;
-    console.log(
-      "🧪 Stream tracks:",
-      stream.getTracks().map((t) => ({
-        kind: t.kind,
-        enabled: t.enabled,
-        state: t.readyState,
-      }))
-    );
-  }, [stream]);
 
   return (
     <>
       <div className="h-screen bg-gray-900 flex flex-col">
-        {/* VIDEO AREA */}
-        <div className="flex-1 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-3xl aspect-video bg-black rounded-xl overflow-hidden">
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-            />
-
-            {!cameraOn && (
-              <div className="absolute inset-0 flex items-center justify-center text-white bg-black/60">
-                Camera Off
-              </div>
-            )}
-          </div>
+        {/* PARTICIPANTS GRID */}
+        <div className="flex-1 grid grid-cols-2 gap-4 p-4">
+          {participants.map((p) => (
+            <ParticipantTile key={p.id} participant={p} stream={p.stream} />
+          ))}
         </div>
 
         {/* CONTROLS */}
@@ -157,7 +137,7 @@ const Meeting = () => {
         confirmText="Leave"
         cancelText="Stay"
         onCancel={() => setShowLeaveDialog(false)}
-        onConfirm={leaveMeeting}
+        onConfirm={handleLeave}
       />
     </>
   );
