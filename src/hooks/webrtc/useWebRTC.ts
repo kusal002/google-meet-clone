@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   getDatabase,
   ref,
@@ -22,7 +22,7 @@ export const useWebRTC = ({ meetingId, isHost }: UseWebRTCProps) => {
 
   const db = getDatabase();
 
-  const roomRef = ref(db, `meetings/${meetingId}`);
+  // const roomRef = ref(db, `meetings/${meetingId}`);
   const offerRef = ref(db, `meetings/${meetingId}/offer`);
   const answerRef = ref(db, `meetings/${meetingId}/answer`);
   const callerCandidatesRef = ref(db, `meetings/${meetingId}/callerCandidates`);
